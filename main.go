@@ -1,7 +1,17 @@
 package main
 
-import "fmt"
+import (
+	"os"
+
+	"Github.com/NaujOyamat/microservice-template/core"
+)
 
 func main() {
-	fmt.Println("Hola mundo...!")
+	args := []string{}
+	if len(os.Args) > 1 {
+		args = os.Args[1:]
+	}
+	core.BuildWebHost(args, func() core.IStartup {
+		return &Startup{}
+	}).Run()
 }
