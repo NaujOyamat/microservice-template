@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Manejador de peticiones al api. Realiza la lógica necesaria
@@ -91,32 +92,8 @@ func executeControllerAction(controllerValue *reflect.Value, method *reflect.Met
 		for k, v := range request.URL.Query() {
 			// Validamos si el parametro existe en la estructura
 			if pIn.Elem().FieldByName(k).IsValid() && len(v) > 0 {
-				fmt.Printf("K: %v", pIn.Elem().FieldByName(k).Kind())
-				switch pIn.Elem().FieldByName(k).Kind() {
-				case reflect.String:
-					pIn.Elem().FieldByName(k).SetString(v[0])
-				case reflect.Int8:
-					vInt, err := strconv.ParseInt(v[0], 10, 8)
-					if err == nil {
-						pIn.Elem().FieldByName(k).SetInt(vInt)
-					}
-				case reflect.Int16:
-					vInt, err := strconv.ParseInt(v[0], 10, 16)
-					if err == nil {
-						pIn.Elem().FieldByName(k).SetInt(vInt)
-					}
-				case reflect.Int32:
-					vInt, err := strconv.ParseInt(v[0], 10, 32)
-					if err == nil {
-						pIn.Elem().FieldByName(k).SetInt(vInt)
-					}
-				case reflect.Int64:
-				case reflect.Int:
-					vInt, err := strconv.ParseInt(v[0], 10, 64)
-					if err == nil {
-						pIn.Elem().FieldByName(k).SetInt(vInt)
-					}
-				}
+				// Mapeamos el parámetro según el tipo de dato del campo en la estructura
+				mapParamToField(pIn.Elem().FieldByName(k), v)
 			} else {
 				result = nil
 				err = fmt.Errorf("executeControllerAction: Parametro (%v) inválido", k)
@@ -128,10 +105,68 @@ func executeControllerAction(controllerValue *reflect.Value, method *reflect.Met
 			result = controllerValue.MethodByName(method.Name).Call([]reflect.Value{pIn.Elem()})
 		}
 	} else if request.Method == http.MethodPost || request.Method == http.MethodPut {
+		defer request.Body.Close()
 		// Si el verbo http es Post o Put, los parametros se toman del cuerpo de la petición
-		result = make([]reflect.Value, 0)
 		err = nil
+
+		// Creamos la instancia de la estructura
+		target := reflect.New(method.Type.In(1)).Interface()
+		// Deserializamos el cuerpo
+		err := json.NewDecoder(request.Body).Decode(&target)
+		if err == nil {
+			result = controllerValue.MethodByName(method.Name).Call([]reflect.Value{reflect.ValueOf(target).Elem()})
+		}
 	}
 
 	return result, err
+}
+
+// Mapea el campo con el parámetro según su tipo de dato
+func mapParamToField(field reflect.Value, param []string) {
+	fieldValue := field.Interface()
+	switch fieldValue.(type) {
+	case string:
+		field.SetString(param[0])
+	case time.Time:
+		t, err := time.Parse(time.RFC3339, param[0])
+		if err == nil {
+			field.Set(reflect.ValueOf(t))
+		}
+	case int8:
+		vInt, err := strconv.ParseInt(param[0], 10, 8)
+		if err == nil {
+			field.SetInt(vInt)
+		}
+	case int16:
+		vInt, err := strconv.ParseInt(param[0], 10, 16)
+		if err == nil {
+			field.SetInt(vInt)
+		}
+	case int32:
+		vInt, err := strconv.ParseInt(param[0], 10, 32)
+		if err == nil {
+			field.SetInt(vInt)
+		}
+	case int64:
+	case int:
+		vInt, err := strconv.ParseInt(param[0], 10, 64)
+		if err == nil {
+			field.SetInt(vInt)
+		}
+	case bool:
+		vBool, err := strconv.ParseBool(param[0])
+		if err == nil {
+			field.SetBool(vBool)
+		}
+	case float32:
+		vFloat, err := strconv.ParseFloat(param[0], 32)
+		if err == nil {
+			field.SetFloat(vFloat)
+		}
+	case float64:
+		vFloat, err := strconv.ParseFloat(param[0], 64)
+		if err == nil {
+			field.SetFloat(vFloat)
+		}
+	}
 }

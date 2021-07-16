@@ -7,7 +7,12 @@ import (
 // Controlador de saludos
 type GreettingController struct{}
 
-// Obtiene un saludo al mundo
-func (*GreettingController) GetHelloWorld(p models.Person) models.Person {
-	return p //fmt.Sprintf("Hola Mundo, %d - %s!", p.Id, p.Name)
+// Obtiene una persona por la url y la retorna
+func (*GreettingController) GetPersonWithGet(p models.Person) models.Person {
+	return p
+}
+
+// Obtiene una persona por el cuerpo de la petición y la retorna
+func (*GreettingController) PostPersonWithPost(p models.Person) models.Person {
+	return p
 }
