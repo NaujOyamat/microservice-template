@@ -10,13 +10,15 @@ import (
 )
 
 // Instancia del host de la aplicación
-var Host *WebHost
+var (
+	Host *WebHost
 
-// Instancia del contenedor de dependencias
-var IoC *container.Container
+	// Instancia del contenedor de dependencias
+	IoC *container.Container
 
-// Instancia del archivo de configuración
-var Configuration *config.Config
+	// Instancia del archivo de configuración
+	Configuration *config.Config
+)
 
 // Encapsula la lógica necesaria para
 // crear y levantar todo un entorno de servidor web
