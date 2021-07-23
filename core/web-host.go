@@ -6,15 +6,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/golobby/config/v2"
 	"github.com/golobby/config/v2/feeder"
-	"github.com/golobby/container/pkg/container"
 )
 
 // Instancia del host de la aplicación
 var (
 	Host *WebHost
-
-	// Instancia del contenedor de dependencias
-	IoC *container.Container
 
 	// Instancia del archivo de configuración
 	Configuration *config.Config
@@ -25,9 +21,9 @@ var (
 // proveiendo unas características básicas, como IoC
 // lector del archivo appsettings.json y más...
 type WebHost struct {
-	port   string
-	ioc    container.Container
-	server *chi.Mux
+	port          string
+	configuration *config.Config
+	server        *chi.Mux
 }
 
 // Inicia la ejecución del host en el puerto
@@ -42,29 +38,23 @@ func BuildWebHost(args []string, startupFunc StartupFunc) *WebHost {
 	// de lo contrario se usa el puerto por defecto 3001
 	port, _ := GetPortArg(args, 3001)
 
+	appsettings, err := config.New(feeder.Json{Path: "appsettings.json"})
+	if err != nil {
+		panic("No se ha podido cargar la configuración del archivo appsettings.json")
+	}
+
 	// Instanciamos el WebHost con el contenedor
 	// de dependencias
 	Host = &WebHost{
-		port:   port,
-		ioc:    container.NewContainer(),
-		server: chi.NewRouter(),
+		port:          port,
+		configuration: appsettings,
+		server:        chi.NewRouter(),
 	}
-	// Registramos la instancia unica del lector
-	// del archivo de configuración
-	Host.ioc.Singleton(func() *config.Config {
-		appsettings, err := config.New(feeder.Json{Path: "appsettings.json"})
-		if err != nil {
-			panic("No se ha podido cargar la configuración del archivo appsettings.json")
-		}
 
-		Configuration = appsettings
-		return appsettings
-	})
-
-	IoC = &Host.ioc
+	Configuration = Host.configuration
 	// Construimos y configuramos el startup
 	startup := startupFunc()
-	startup.ConfigureServices(IoC, Configuration)
+	startup.ConfigureServices(Configuration)
 	startup.Configure(Host.server, Configuration)
 
 	return Host
