@@ -54,8 +54,7 @@ func BuildWebHost(args []string, startupFunc StartupFunc) *WebHost {
 	Configuration = Host.configuration
 	// Construimos y configuramos el startup
 	startup := startupFunc()
-	startup.ConfigureServices(Configuration)
-	startup.Configure(Host.server, Configuration)
+	startup.ConfigureService(Host.server, Configuration)
 
 	return Host
 }

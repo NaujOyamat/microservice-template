@@ -1,7 +1,9 @@
 package core
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -31,13 +33,18 @@ func SetDefaultMiddlewares(router *chi.Mux) {
 	router.Use(middleware.Timeout(3600 * time.Second))
 
 	// Agregamos el manejador de peticiones de controladores
-	router.HandleFunc("/*", RequestControllerHandler)
+	router.HandleFunc(fmt.Sprintf("/%s*", strings.ReplaceAll(ApiUrlPrefix, "\\", "")), RequestControllerHandler)
+	// Agregamos manejador para archivos estáticos
+	router.Handle("/*", http.FileServer(http.Dir("wwwroot")))
 }
 
 // Aplica el parametro contenType y lo asigna como application/json
 func jsonContentType(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "application/json")
+		auxPrefix := fmt.Sprintf("/%s", strings.ReplaceAll(ApiUrlPrefix, "\\", ""))
+		if len(r.URL.Path) >= 5 && strings.ToLower(string(r.URL.Path[:len(auxPrefix)])) == auxPrefix {
+			w.Header().Add("Content-Type", "application/json")
+		}
 		h.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(fn)

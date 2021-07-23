@@ -8,9 +8,6 @@ import (
 // Define las funciones que debe tener una
 // estructura de inicio y configuración
 type IStartup interface {
-	// Configura los servicios en el contenedor
-	// de dependencias del host
-	ConfigureServices(*config.Config)
-	// Configura las rutas del api
-	Configure(*chi.Mux, *config.Config)
+	// Configura las rutas y demás en el api
+	ConfigureService(*chi.Mux, *config.Config)
 }

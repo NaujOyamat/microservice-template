@@ -11,12 +11,8 @@ import (
 // del servicio web
 type Startup struct{}
 
-// Configura los servicios en el contenedor
-// de dependencias del host
-func (s *Startup) ConfigureServices(configuration *config.Config) {}
-
-// Configura las rutas del api
-func (s *Startup) Configure(router *chi.Mux, configuration *config.Config) {
+// Configura las rutas y demás en el api
+func (s *Startup) ConfigureService(router *chi.Mux, configuration *config.Config) {
 	// Aplicamos los middleware por defecto
 	core.SetDefaultMiddlewares(router)
 
