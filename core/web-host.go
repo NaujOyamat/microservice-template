@@ -37,6 +37,9 @@ func BuildWebHost(args []string, startupFunc StartupFunc) *WebHost {
 	// Obtenemos el puerto de los argumentos entrantes si existe,
 	// de lo contrario se usa el puerto por defecto 3001
 	port, _ := GetPortArg(args, 3001)
+	// Obtenemos el prefijo de los argumentos entrantes si existe,
+	// de lo contrario se usa el api por defecto
+	ApiUrlPrefix, _ = GetPrefixArg(args, "api")
 
 	appsettings, err := config.New(feeder.Json{Path: "appsettings.json"})
 	if err != nil {

@@ -8,6 +8,11 @@ import (
 type GreettingController struct{}
 
 // Obtiene una persona por la url y la retorna
+func (*GreettingController) GetHealthCheck() string {
+	return "Ok"
+}
+
+// Obtiene una persona por la url y la retorna
 func (*GreettingController) GetPersonWithGet(p models.Person) models.Person {
 	return p
 }

@@ -45,10 +45,12 @@ func RequestControllerHandler(w http.ResponseWriter, r *http.Request) {
 						w.Write([]byte("ERROR: El método no puede retornar más de un parámetro"))
 						return
 					}
-					if method.Type.NumIn() != 2 || (method.Type.In(1).Kind() != reflect.Struct && method.Type.In(1).Kind() != reflect.Interface) {
-						w.WriteHeader(http.StatusInternalServerError)
-						w.Write([]byte("ERROR: El método solo puede tener un parámetro de tipo Struct"))
-						return
+					if r.Method == "POST" {
+						if method.Type.NumIn() != 2 || (method.Type.In(1).Kind() != reflect.Struct && method.Type.In(1).Kind() != reflect.Interface) {
+							w.WriteHeader(http.StatusInternalServerError)
+							w.Write([]byte("ERROR: El método solo puede tener un parámetro de tipo Struct"))
+							return
+						}
 					}
 					// Obtenemos el valor del controlador por reflection
 					controllerValue := reflect.ValueOf(controllerInstance)
@@ -86,23 +88,27 @@ func executeControllerAction(controllerValue *reflect.Value, method *reflect.Met
 	if request.Method == http.MethodGet || request.Method == http.MethodDelete {
 		result = make([]reflect.Value, 0)
 		err = nil
-		// Creamos la instancia de la estructura
-		pIn := reflect.New(method.Type.In(1))
-		// Recorremos los parametros del queryString y los mapeamos a la estructura de entrada
-		for k, v := range request.URL.Query() {
-			// Validamos si el parametro existe en la estructura
-			if pIn.Elem().FieldByName(k).IsValid() && len(v) > 0 {
-				// Mapeamos el parámetro según el tipo de dato del campo en la estructura
-				mapParamToField(pIn.Elem().FieldByName(k), v)
-			} else {
-				result = nil
-				err = fmt.Errorf("executeControllerAction: Parametro (%v) inválido", k)
-				break
+		if method.Type.NumIn() == 2 {
+			// Creamos la instancia de la estructura
+			pIn := reflect.New(method.Type.In(1))
+			// Recorremos los parametros del queryString y los mapeamos a la estructura de entrada
+			for k, v := range request.URL.Query() {
+				// Validamos si el parametro existe en la estructura
+				if pIn.Elem().FieldByName(k).IsValid() && len(v) > 0 {
+					// Mapeamos el parámetro según el tipo de dato del campo en la estructura
+					mapParamToField(pIn.Elem().FieldByName(k), v)
+				} else {
+					result = nil
+					err = fmt.Errorf("executeControllerAction: Parametro (%v) inválido", k)
+					break
+				}
 			}
-		}
-		// Si no hay error, la estructura se mapeo con exito
-		if err == nil {
-			result = controllerValue.MethodByName(method.Name).Call([]reflect.Value{pIn.Elem()})
+			// Si no hay error, la estructura se mapeo con exito
+			if err == nil {
+				result = controllerValue.MethodByName(method.Name).Call([]reflect.Value{pIn.Elem()})
+			}
+		} else {
+			result = controllerValue.MethodByName(method.Name).Call([]reflect.Value{})
 		}
 	} else if request.Method == http.MethodPost || request.Method == http.MethodPut {
 		defer request.Body.Close()
