@@ -22,7 +22,12 @@ func CreateHandler(repo repository.ICourseRepository) gin.HandlerFunc {
 			return
 		}
 
-		course := courses.NewCourse(req.ID, req.Name, req.Duration)
+		course, err := courses.NewCourse(req.ID, req.Name, req.Duration)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, err.Error())
+			return
+		}
+
 		if err := repo.Save(ctx, course); err != nil {
 			ctx.JSON(http.StatusInternalServerError, err.Error())
 			return

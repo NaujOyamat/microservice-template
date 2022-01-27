@@ -1,12 +1,12 @@
-package server
+package httpserver
 
 import (
 	"fmt"
 	"log"
 
 	courseRepo "Github.com/NaujOyamat/microservice-template/internal/domain/courses/repository"
-	"Github.com/NaujOyamat/microservice-template/internal/platform/server/handlers/courses"
-	"Github.com/NaujOyamat/microservice-template/internal/platform/server/handlers/health"
+	"Github.com/NaujOyamat/microservice-template/internal/infrastructure/httpserver/handlers/courses"
+	"Github.com/NaujOyamat/microservice-template/internal/infrastructure/httpserver/handlers/health"
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,6 +21,7 @@ type Dependencies struct {
 }
 
 func New(host string, port int, dependencies Dependencies) HttpServer {
+	gin.SetMode(gin.ReleaseMode)
 	svr := HttpServer{
 		httpAddr:     fmt.Sprintf("%s:%d", host, port),
 		engine:       gin.New(),

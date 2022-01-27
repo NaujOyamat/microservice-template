@@ -1,20 +1,27 @@
 package courses
 
+import valueobjects "Github.com/NaujOyamat/microservice-template/internal/domain/courses/value-objects"
+
 type Course struct {
-	id       string
+	id       valueobjects.CourseID
 	name     string
 	duration string
 }
 
-func NewCourse(id, name, duration string) *Course {
+func NewCourse(id, name, duration string) (*Course, error) {
+	courseId, err := valueobjects.NewCourseID(id)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Course{
-		id:       id,
+		id:       courseId,
 		name:     name,
 		duration: duration,
-	}
+	}, nil
 }
 
-func (c *Course) ID() string {
+func (c *Course) ID() valueobjects.CourseID {
 	return c.id
 }
 
